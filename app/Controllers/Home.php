@@ -21,16 +21,16 @@ class Home extends BaseController
 
     public function index(): string
     {
-        $data = csv_to_array('penjualan.csv');
-        $val = [];
+        // $data = csv_to_array('penjualan.csv');
+        // $val = [];
 
-        foreach ($data as $k => $i) {
-            if ($k > 4 && $k < 164) {
-                $exp = explode(";", $i[0]);
-                $val[] = ['no' => ((array_key_exists(0, $exp) ? $exp[0] : "")), 'barang' => (array_key_exists(1, $exp) ? $exp[1] : ""), 'qty' => (array_key_exists(4, $exp) ? $exp[4] : ""), 'satuan' => (array_key_exists(3, $exp) ? $exp[3] : ""),  'harga' => (array_key_exists(5, $exp) ? str_replace(".", "", $exp[5]) : 0)];
-                // $val[] = $i;
-            }
-        }
+        // foreach ($data as $k => $i) {
+        //     if ($k > 4 && $k < 164) {
+        //         $exp = explode(";", $i[0]);
+        //         $val[] = ['no' => ((array_key_exists(0, $exp) ? $exp[0] : "")), 'barang' => (array_key_exists(1, $exp) ? $exp[1] : ""), 'qty' => (array_key_exists(4, $exp) ? $exp[4] : ""), 'satuan' => (array_key_exists(3, $exp) ? $exp[3] : ""),  'harga' => (array_key_exists(5, $exp) ? str_replace(".", "", $exp[5]) : 0)];
+        //         // $val[] = $i;
+        //     }
+        // }
 
         // dd($val);
         $db = db('penjualan');
