@@ -11,17 +11,51 @@
     <script src="<?= base_url(); ?>jquery.js"></script>
     <link rel="stylesheet" href="<?= base_url('bootstrap'); ?>/css/bootstrap.min.css">
     <script src="<?= base_url('bootstrap'); ?>/js/bootstrap.bundle.min.js"></script>
+    <?php
+    if (url() == "home") : ?>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
+    <?php endif; ?>
     <style>
         a {
             text-decoration: none;
         }
+
+        .top-layer-wrapper {
+            position: relative;
+        }
+
+        .top-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            /* Angka yang lebih tinggi untuk layer teratas */
+            background-color: aqua;
+            /* Hanya untuk contoh visual */
+            pointer-events: none;
+            /* Untuk menghindari masalah interaksi */
+            border-bottom: 2px solid black;
+        }
     </style>
 
-
+    <script>
+        async function post(url = '', data = {}) {
+            const response = await fetch("<?= base_url(); ?>" + url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+            return response.json(); // parses JSON response into native JavaScript objects
+        }
+    </script>
 
 </head>
 
-<body class="bg-dark text-light">
+<body class="bg-dark text-light" style="padding-bottom: 100px;">
     <?= view('templates/navbar'); ?>
     <div id="modal_fullscreen"></div>
     <!-- Modal -->
@@ -32,35 +66,7 @@
                     <a href="" class="text-danger fs-4"><i class="fa-solid fa-circle-xmark"></i></a>
                 </div>
                 <div class="modal-body modal-fullscreen">
-                    <table class="table table-sm table-dark table-striped" style="font-size: 12px;">
-                        <thead>
-                            <tr>
-                                <th scope="col">#</th>
-                                <th scope="col">First</th>
-                                <th scope="col">Last</th>
-                                <th scope="col">Handle</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <th scope="row">1</th>
-                                <td>Mark</td>
-                                <td>Otto</td>
-                                <td>@mdo</td>
-                            </tr>
-                            <tr>
-                                <th scope="row">2</th>
-                                <td>Jacob</td>
-                                <td>Thornton</td>
-                                <td>@fat</td>
-                            </tr>
-                            <tr>
-                                <th scope="row">3</th>
-                                <td colspan="2">Larry the Bird</td>
-                                <td>@twitter</td>
-                            </tr>
-                        </tbody>
-                    </table>
+
                 </div>
 
             </div>
@@ -71,7 +77,10 @@
 
     </div>
 
-    <nav class="fixed-bottom border-top border-secondary">
+    <div class="fixed-bottom message" style="margin-bottom: 90px;z-index:999999"></div>
+
+
+    <nav class="fixed-bottom border-top border-secondary bg-dark">
         <div class="m-auto text-center p-3">
             <a target="_blank" href="https://www.instagram.com/djanasragen/">
                 <svg width="98" height="17" viewBox="0 0 98 17" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -91,6 +100,24 @@
     </nav>
 
     <script>
+        // let myModal = document.getElementById("fullscreen");
+        // let modal = bootstrap.Modal.getOrCreateInstance(myModal);
+        // modal.show();
+
+        const message = (status = "200", message) => {
+            let html = `<div class="d-flex justify-content-center">
+                            <div class="bg-opacity-25 ${(status=="200"?"bg-success border border-success":"bg-danger border border-danger")} px-5 pb-1 rounded" style="font-size: medium;">${message}</div>
+                        </div>`;
+
+            $(".message").html(html);
+            setTimeout(() => {
+                $(".message").html("");
+            }, 1000);
+
+        }
+
+
+
         $(document).on('keyup', '.cari', function(e) {
             e.preventDefault();
             let value = $(this).val().toLowerCase();
@@ -108,20 +135,8 @@
             popup.message("200", "Copy text sukses.");
 
         });
-        async function post(url = '', data = {}) {
-            const response = await fetch("<?= base_url(); ?>" + url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data),
-            });
-            return response.json(); // parses JSON response into native JavaScript objects
-        }
 
-        // let myModal = document.getElementById("fullscreen");
-        // let modal = bootstrap.Modal.getOrCreateInstance(myModal);
-        // modal.show();
+
 
         // Mendefinisikan kelas
         class Modal {
@@ -129,13 +144,14 @@
             constructor(header = "noButton", bg = "bg-dark") {
                 this.header = header;
                 this.bg = bg;
+                this.bg = bg;
             }
 
             // Properti statis
             headers = {
                 noButton: '',
                 confirm: '',
-                button: '<a href="" role="button" data-bs-dismiss="modal" class="text-danger fs-4 mt-4"><i class="fa-solid fa-circle-xmark"></i></a>',
+                button: '<a href="" role="button" data-bs-dismiss="modal" class="text-danger fs-4 mt-4 btn_close_modal"><i class="fa-solid fa-circle-xmark"></i></a>',
             };
 
 
@@ -220,10 +236,13 @@
                 }
             }
         }
+        // Mendefinisikan tabel
+
 
         // Membuat instance dari kelas Modal
         const popup = new Modal();
         const popup_confirm = new Modal("confirm");
+        const popupButton = new Modal("button");
 
         // Menampilkan pesan sukses dan memanggil metode execute
         // popup.confirm("myElement");
@@ -256,6 +275,72 @@
 
             return result;
         }
+
+
+        function angka(a, prefix) {
+            let angka = a.toString();
+            let number_string = angka.replace(/[^,\d]/g, '').toString(),
+                split = number_string.split(','),
+                sisa = split[0].length % 3,
+                rupiah = split[0].substr(0, sisa),
+                ribuan = split[0].substr(sisa).match(/\d{3}/gi);
+
+            if (ribuan) {
+                separator = sisa ? '.' : '';
+                rupiah += separator + ribuan.join('.');
+            }
+
+            rupiah = split[1] != undefined ? rupiah + ',' + split[1] : rupiah;
+            return prefix == undefined ? rupiah : (rupiah ? 'Rp. ' + rupiah : '');
+        }
+
+
+        const str_replace = (search, replace, subject) => {
+            return subject.split(search).join(replace);
+        }
+
+        $(document).on('keyup', '.angka', function(e) {
+            e.preventDefault();
+            let val = $(this).val();
+
+            $(this).val(angka(val));
+        });
+
+        // untuk format rupiah dalam td
+        $(document).on('keyup', '.angka_text', function(e) {
+            e.preventDefault();
+            let value = $(this).text();
+
+            // Hapus format lama (non-angka)
+            value = value.replace(/[^0-9]/g, '');
+
+            // Format angka tanpa "Rp"
+            let formatted = new Intl.NumberFormat('id-ID', {
+                minimumFractionDigits: 0
+            }).format(value || 0);
+
+            // Masukkan kembali angka ke dalam <td>
+            $(this).text(formatted);
+
+            // Memastikan kursor tetap berada di posisi terakhir
+            const selection = window.getSelection();
+            const range = document.createRange();
+            range.selectNodeContents(this);
+            range.collapse(false);
+            selection.removeAllRanges();
+            selection.addRange(range);
+        });
+
+        const time_php_to_js = (date) => {
+            let d = new Date(date * 1000);
+            let month = (d.getMonth() + 1).toString().padStart(2, '0'); // Bulan dimulai dari 0, sehingga harus ditambah 1
+            let day = d.getDate().toString().padStart(2, '0');
+            let year = d.getFullYear();
+
+            let res = `${day}/${month}/${year}`;
+            return res;
+        }
+
 
         <?php if (session()->getFlashdata('gagal')) : ?>
             let msg = "<?= session()->getFlashdata('gagal'); ?>";

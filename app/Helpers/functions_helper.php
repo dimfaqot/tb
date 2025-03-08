@@ -107,27 +107,6 @@ function menu($req = null)
 }
 
 
-function set_qr_code($text)
-{
-    $writer = new PngWriter();
-    $qrCode = QrCode::create($text)
-        // ->setEncoding(new Encoding('UTF-8'))
-        // ->setErrorCorrectionLevel(ErrorCorrectionLevel::Low)
-        ->setSize(300)
-        ->setMargin(0)
-
-        ->setForegroundColor(new Color(0, 0, 0));
-    // ->setBackgroundColor(new Color(255, 255, 255));
-
-    $result = $writer->write($qrCode);
-
-
-    $qr = $result->getDataUri();
-
-
-    return $qr;
-}
-
 function db($tabel, $db = null)
 {
     if ($db == null || $db == getenv('db_used')) {
@@ -342,7 +321,7 @@ function hari($req)
 
 function angka($angka)
 {
-    return number_format($angka, 0, ',', ',');
+    return number_format($angka, 0, '.', '.');
 }
 
 function upper_first($text)
@@ -378,31 +357,50 @@ function csv_to_array($file = "katalog.csv")
     fclose($file);
 
     return $data;
+}
+
+function no_nota($tgl)
+{
+    $db = db('penjualan');
+    $q = $db->orderBy('tgl', 'DESC')->get()->getRowArray();
 
 
-    // proses selanjutnya
-    // $data = csv_to_array();
-    // $val = [];
+    $nota = date('dmY', $tgl) . '-0001';
 
-    // foreach ($data as $k => $i) {
-    //     if ($k > 4 && $k < 164) {
-    //         $exp = explode(";", $i[0]);
-    //         $val[] = ['no' => ((array_key_exists(0, $exp) ? $exp[0] : "")), 'barang' => (array_key_exists(1, $exp) ? $exp[1] : ""), 'qty' => (array_key_exists(2, $exp) ? $exp[2] : ""), 'satuan' => (array_key_exists(3, $exp) ? $exp[3] : ""), 'beli' => (array_key_exists(4, $exp) ? $exp[4] : ""), 'jual' => (array_key_exists(5, $exp) ? $exp[5] : "")];
-    //     }
-    // }
-    // $db = db('barang');
-    // foreach ($val as $i) {
+    if ($q) {
+        if (date('m', $tgl) == date("m", $q['tgl']) && date('Y', $tgl) == date("Y", $q['tgl'])) {
+            $last_nota = explode("-", $q['no_nota']);
+            $new_nota = (int)end($last_nota) + 1;
 
-    //     $data = [
-    //         'barang' => $i['barang'],
-    //         'qty' => $i['qty'],
-    //         'satuan' => $i['satuan'],
-    //         'beli' => $i['beli'],
-    //         'jual' => $i['jual'],
-    //         'updated_at' => time(),
-    //         'petugas' => user()['nama'],
-    //     ];
+            $temp_nota = '';
+            if (strlen($new_nota) == 1) {
+                $temp_nota = '000' . $new_nota;
+            } elseif (strlen($new_nota) == 2) {
+                $temp_nota = '00' . $new_nota;
+            } elseif (strlen($new_nota) == 3) {
+                $temp_nota = '0' . $new_nota;
+            } else {
+                $temp_nota = $new_nota;
+            }
 
-    //     $db->insert($data);
-    // }
+            $nota = date('dmY', $tgl) . '-' . $temp_nota;
+        }
+    }
+
+    return $nota;
+}
+
+function get_tahun()
+{
+    $db = db('pengeluaran');
+    $q = $db->orderBy('tgl', 'DESC')->get()->getResultArray();
+    $tahuns = [];
+
+    foreach ($q as $i) {
+        if (!in_array(date('Y', $i['tgl']), $tahuns)) {
+            $tahuns[] = date('Y', $i['tgl']);
+        }
+    }
+
+    return $tahuns;
 }
